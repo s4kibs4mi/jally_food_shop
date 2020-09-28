@@ -53,7 +53,7 @@ def orders_list(request):
 
 
 def store_home(request):
-    return render(request, 'store/index.html')
+    return redirect("/v1/store/products")
 
 
 def store_add_product(request):
