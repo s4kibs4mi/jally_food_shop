@@ -18,6 +18,7 @@ from rest_api.serializers import OrderItemSerializer
 from rest_api.serializers import UserSerializer
 from datetime import datetime
 from rest_api import jwt
+from django.db import transaction
 
 
 # Create your views here.
@@ -102,11 +103,14 @@ def users_profile(request):
     pass
 
 
+@transaction.atomic()
 @api_view(['POST'])
 def orders_create(request):
     try:
         user_id = request.session['user_id']
         user = User.objects.get(id=user_id)
+
+        sp = transaction.savepoint()
 
         total_cost = 0
         items = request.data["items"]
@@ -121,6 +125,16 @@ def orders_create(request):
             order_item.price = food_item.price
             order_item.quantity = i["quantity"]
             order_item.total = order_item.price * order_item.quantity
+
+            if food_item.quantity - order_item.quantity < 0:
+                transaction.savepoint_rollback(sp)
+
+                return Response({
+                    'error': 'item: ' + food_item.name + ' is unavailable'
+                }, status.HTTP_400_BAD_REQUEST)
+
+            food_item.quantity = food_item.quantity - order_item.quantity
+            food_item.save()
 
             total_cost += order_item.total
             ordered_items.append(order_item)
@@ -153,6 +167,9 @@ def orders_create(request):
         resp = {
             "id": order.id
         }
+
+        transaction.savepoint_commit(sp)
+
         return Response(resp, status=status.HTTP_201_CREATED)
     except KeyError as e:
         print(e)
