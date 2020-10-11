@@ -5,6 +5,7 @@ from django.shortcuts import render
 from django.shortcuts import redirect
 from rest_api.forms import FoodItemForm
 from rest_api.forms import FoodCategoryForm
+from rest_api.forms import OrderForm
 from rest_api.models import FoodItem
 from rest_api.models import FoodCategory
 from rest_api.models import OrderItem
@@ -207,14 +208,14 @@ def orders_get(request, id):
 def orders_list(request):
     user_id = request.session['user_id']
     user = User.objects.get(id=user_id)
-    orders = Order.objects.filter(user=user)
+    orders = Order.objects.filter(user=user).order_by('-created_at')
     serializer = OrderSerializer(orders, many=True)
     return Response(serializer.data)
 
 
 @api_view(['GET'])
 def products_list(request):
-    food_items = FoodItem.objects.all()
+    food_items = FoodItem.objects.all().order_by('-created_at')
     resp = Response(FoodItemSerializer(food_items, many=True).data)
     resp['Access-Control-Allow-Origin'] = '*'
     resp['Access-Control-Allow-Headers'] = '*'
@@ -241,7 +242,7 @@ def store_add_product(request):
 
 
 def store_list_products(request):
-    food_items = FoodItem.objects.all()
+    food_items = FoodItem.objects.all().order_by('-created_at')
     ctx = {
         'food_items': food_items
     }
@@ -314,3 +315,56 @@ def store_delete_category(request, id):
     instance = FoodCategory.objects.get(id=id)
     instance.delete()
     return redirect("/v1/store/categories")
+
+
+def store_list_orders(request):
+    orders = Order.objects.all().order_by('-created_at')
+
+    formatted_orders = []
+
+    for o in orders:
+        u = User.objects.get(id=o.user_id)
+
+        formatted_order = {
+            'id': o.id,
+            'at': o.created_at,
+            'user_name': u.name,
+            'total': o.grand_total,
+            'status': o.status,
+        }
+
+        formatted_items = []
+        ordered_items = OrderItem.objects.filter(order=o)
+        for i in ordered_items:
+            formatted_items.append({
+                'name': i.food_item.name,
+                'image': i.food_item.food_picture,
+                'price': i.price,
+                'quantity': i.quantity,
+                'total': i.total,
+            })
+
+        formatted_order['items'] = formatted_items
+
+        formatted_orders.append(formatted_order)
+
+    ctx = {
+        'orders': formatted_orders
+    }
+    return render(request, "store/orders.html", ctx)
+
+
+def store_update_order(request, id):
+    instance = Order.objects.get(id=id)
+    form = OrderForm(None, instance=instance)
+
+    if request.method == "POST":
+        form = OrderForm(request.POST, request.FILES, instance=instance)
+        if form.is_valid():
+            form.save()
+            return redirect("/v1/store/requests")
+
+    ctx = {
+        'form': form
+    }
+    return render(request, 'store/update_order.html', ctx)

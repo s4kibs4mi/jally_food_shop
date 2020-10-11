@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Food Delivery System</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        nav {
+            margin: 0;
+            padding: 0;
+            width: 200px;
+            background-color: #000000;
+            position: fixed;
+            height: 100%;
+            overflow: auto;
+        }
+
+        nav a {
+            display: block;
+            color: rgb(255, 255, 255);
+            font-weight: bolder;
+            font-size: 20px;
+            padding: 16px;
+            text-decoration: none;
+        }
+
+        nav a.selected {
+            background-color: rgb(15, 189, 20);
+            color: rgb(255, 255, 255);
+        }
+
+        nav a:hover:not(.selected) {
+            background-color: white;
+            color: #2f77e4;
+        }
+
+        div.content {
+            margin-left: 200px;
+            padding: 1px 16px;
+            height: 1000px;
+        }
+
+        @media screen and (max-width: 700px) {
+            nav {
+                width: 100%;
+                height: auto;
+                position: relative;
+            }
+
+            nav a {
+                float: left;
+            }
+
+            div.content {
+                margin-left: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+
+{% include "store/nav.html" %}
+
+<div class="content">
+    <h1>All Orders</h1>
+
+    {% for o in orders %}
+        <div class="card" style="width: 18rem; margin-top: 5px">
+            <div class="card-body">
+                <p class="card-title">By : {{ o.user_name }}</p>
+                <p class="card-title">ID : {{ o.id }}</p>
+                <p class="card-title">Status : {{ o.status }}</p>
+                <p class="card-text">At: {{ o.at }}</p>
+                <p class="card-text">Total: {{ o.total }} BDT</p>
+            </div>
+            <ul class="list-group list-group-flush">
+                <span>Items</span>
+                {% for i in o.items %}
+                    <img class="bd-placeholder-img card-img-top" src="/media/{{ i.image }}" width="25px"
+                         height="25">
+
+                    <li class="list-group-item">Name: {{ i.name }}</li>
+                    <li class="list-group-item">Price: {{ i.price }} BDT</li>
+                    <li class="list-group-item">Quantity: {{ i.quantity }}</li>
+                    <li class="list-group-item">Total: {{ i.total }} BDT</li>
+                {% endfor %}
+            </ul>
+            <div class="card-body">
+                <a href="/v1/store/requests/update/{{ o.id }}" class="card-link">Update</a>
+            </div>
+        </div>
+    {% endfor %}
+</div>
+</body>
+</html>

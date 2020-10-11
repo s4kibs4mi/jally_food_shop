@@ -40,6 +40,9 @@ urlpatterns = [
                   path('v1/store/categories/update/<str:id>/', views.store_update_category),
                   path('v1/store/categories/delete/<str:id>/', views.store_delete_category),
 
+                  path('v1/store/requests/', views.store_list_orders),
+                  path('v1/store/requests/update/<str:id>/', views.store_update_order),
+
                   path('admin/', admin.site.urls),
               ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT) + static(settings.MEDIA_URL,
                                                                                            document_root=settings.MEDIA_ROOT)

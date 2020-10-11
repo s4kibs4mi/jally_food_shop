@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Food Delivery System</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        nav {
+            margin: 0;
+            padding: 0;
+            width: 200px;
+            background-color: #000000;
+            position: fixed;
+            height: 100%;
+            overflow: auto;
+        }
+
+        nav a {
+            display: block;
+            color: rgb(255, 255, 255);
+            font-weight: bolder;
+            font-size: 20px;
+            padding: 16px;
+            text-decoration: none;
+        }
+
+        nav a.selected {
+            background-color: rgb(15, 189, 20);
+            color: rgb(255, 255, 255);
+        }
+
+        nav a:hover:not(.selected) {
+            background-color: white;
+            color: #2f77e4;
+        }
+
+        div.content {
+            margin-left: 200px;
+            padding: 1px 16px;
+            height: 1000px;
+        }
+
+        @media screen and (max-width: 700px) {
+            nav {
+                width: 100%;
+                height: auto;
+                position: relative;
+            }
+
+            nav a {
+                float: left;
+            }
+
+            div.content {
+                margin-left: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+
+{% include "store/nav.html" %}
+
+<div class="content">
+    <h1>Update Order</h1>
+
+    <form action="" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <input type="submit" value="Update">
+    </form>
+</div>
+</body>
+</html>
