@@ -14,6 +14,7 @@ class Address(models.Model):
 
 class User(models.Model):
     name = models.CharField(max_length=50)
+    email = models.EmailField(unique=True)
     password = models.CharField(max_length=50)
     status = models.CharField(max_length=20)
     user_type = models.CharField(max_length=20)

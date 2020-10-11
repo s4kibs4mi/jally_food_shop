@@ -1,12 +1,23 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
+from rest_framework import status
 from django.shortcuts import render
 from django.shortcuts import redirect
 from rest_api.forms import FoodItemForm
 from rest_api.forms import FoodCategoryForm
 from rest_api.models import FoodItem
 from rest_api.models import FoodCategory
+from rest_api.models import OrderItem
+from rest_api.models import OrderLog
+from rest_api.models import Order
+from rest_api.models import User
+from rest_api.models import Address
 from rest_api.serializers import FoodItemSerializer
+from rest_api.serializers import OrderSerializer
+from rest_api.serializers import OrderItemSerializer
+from rest_api.serializers import UserSerializer
+from datetime import datetime
+from rest_api import jwt
 
 
 # Create your views here.
@@ -26,12 +37,64 @@ def overview(request):
 
 @api_view(['POST'])
 def users_register(request):
-    pass
+    try:
+        user = User()
+        user.name = request.data["name"]
+        user.status = "active"
+        user.password = request.data["password"]
+        user.email = request.data["email"]
+        user.created_at = datetime.now()
+
+        try:
+            user.save()
+            serializer = UserSerializer(user)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            return Response({
+                "error": "email " + user.email + " already registered"
+            }, status=status.HTTP_409_CONFLICT)
+    except KeyError as e:
+        print(e)
+
+        msg = {
+            'error': str(e) + " is required"
+        }
+        return Response(msg, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        print(e)
+
+        msg = {
+            'error': "Invalid request"
+        }
+        return Response(msg, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['POST'])
 def users_login(request):
-    pass
+    try:
+        email = request.data["email"]
+        password = request.data["password"]
+
+        users = User.objects.filter(email=email, password=password)
+        if users.__len__() != 0:
+            token = jwt.encode(users[0].id)
+            return Response({'token': token}, status=status.HTTP_200_OK)
+
+        return Response({}, status=status.HTTP_401_UNAUTHORIZED)
+    except KeyError as e:
+        print(e)
+
+        msg = {
+            'error': str(e) + " is required"
+        }
+        return Response(msg, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        print(e)
+
+        msg = {
+            'error': "Invalid request"
+        }
+        return Response(msg, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['GET'])
@@ -41,23 +104,104 @@ def users_profile(request):
 
 @api_view(['POST'])
 def orders_create(request):
-    pass
+    try:
+        user_id = request.session['user_id']
+        user = User.objects.get(id=user_id)
+
+        total_cost = 0
+        items = request.data["items"]
+        ordered_items = []
+
+        for i in items:
+            print(i)
+
+            food_item = FoodItem.objects.get(id=i["id"])
+            order_item = OrderItem()
+            order_item.food_item = food_item
+            order_item.price = food_item.price
+            order_item.quantity = i["quantity"]
+            order_item.total = order_item.price * order_item.quantity
+
+            total_cost += order_item.total
+            ordered_items.append(order_item)
+
+        delivery_address_params = request.data["delivery_address"]
+        address = Address()
+        address.street = delivery_address_params["street"]
+        address.city = delivery_address_params["city"]
+        address.state = delivery_address_params["state"]
+        address.country = delivery_address_params["country"]
+        address.postcode = delivery_address_params["postcode"]
+        address.save()
+
+        order = Order()
+        order.user = user
+        order.status = "pending"
+        order.sub_total = total_cost
+        order.payment_processing_fee = 0
+        order.grand_total = total_cost
+        order.billing_address = address
+        order.delivery_address = address
+        order.created_at = datetime.now()
+        order.updated_at = datetime.now()
+        order.save()
+
+        for i in ordered_items:
+            i.order = order
+            i.save()
+
+        resp = {
+            "id": order.id
+        }
+        return Response(resp, status=status.HTTP_201_CREATED)
+    except KeyError as e:
+        print(e)
+
+        msg = {
+            'error': str(e) + " is required"
+        }
+        return Response(msg, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        print(e)
+
+        msg = {
+            'error': "Invalid request"
+        }
+        return Response(msg, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['GET'])
-def orders_get(request):
-    pass
+def orders_get(request, id):
+    user_id = request.session['user_id']
+    user = User.objects.get(id=user_id)
+
+    order = Order.objects.filter(user=user, id=id).first()
+    serializer = OrderSerializer(order)
+    ordered_items = OrderItem.objects.filter(order=order)
+    ordered_items_serializer = OrderItemSerializer(ordered_items, many=True)
+
+    resp = serializer.data
+    resp["items"] = ordered_items_serializer.data
+
+    return Response(resp)
 
 
 @api_view(['GET'])
 def orders_list(request):
-    pass
+    user_id = request.session['user_id']
+    user = User.objects.get(id=user_id)
+    orders = Order.objects.filter(user=user)
+    serializer = OrderSerializer(orders, many=True)
+    return Response(serializer.data)
 
 
 @api_view(['GET'])
 def products_list(request):
     food_items = FoodItem.objects.all()
-    return Response(FoodItemSerializer(food_items, many=True).data)
+    resp = Response(FoodItemSerializer(food_items, many=True).data)
+    resp['Access-Control-Allow-Origin'] = '*'
+    resp['Access-Control-Allow-Headers'] = '*'
+    return resp
 
 
 # Store endpoints start

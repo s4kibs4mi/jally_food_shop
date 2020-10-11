@@ -34,15 +34,7 @@ class FoodItemSerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'food_picture', 'price', 'quantity', 'food_category', 'created_at', 'updated_at')
 
 
-class OrderSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Order
-        fields = (
-            'user', 'status', 'sub_total', 'payment_processing_fee', 'grand_total', 'billing_address',
-            'delivery_address', 'created_at', 'updated_at')
-
-
-class OrderItemCategorySerializer(serializers.ModelSerializer):
+class OrderItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = OrderItem
         fields = ('food_item', 'quantity', 'price', 'total')
@@ -52,3 +44,13 @@ class OrderLogSerializer(serializers.ModelSerializer):
     class Meta:
         model = OrderLog
         fields = ('event', 'created_at')
+
+
+class OrderSerializer(serializers.ModelSerializer):
+    delivery_address = AddressSerializer()
+
+    class Meta:
+        model = Order
+        fields = (
+            'status', 'grand_total',
+            'delivery_address', 'created_at', 'updated_at')

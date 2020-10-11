@@ -21,13 +21,13 @@ from rest_api import views
 
 urlpatterns = [
                   path('v1/', views.overview),
-                  path('v1/users/', views.users_register),
+                  path('v1/register/', views.users_register),
                   path('v1/login/', views.users_login),
                   path('v1/users/', views.users_profile),
-                  path('v1/orders/', views.orders_create),
-                  path('v1/orders/<str:pk>/', views.orders_get),
-                  path('v1/orders/', views.orders_list),
-                  path('v1/products/', views.products_list),
+                  path('v1/orders/create/', views.orders_create),
+                  path('v1/orders/search/', views.orders_list),
+                  path('v1/orders/view/<str:id>/', views.orders_get),
+                  path('v1/products/search/', views.products_list),
 
                   path('v1/store/', views.store_home),
                   path('v1/store/products/', views.store_list_products),
