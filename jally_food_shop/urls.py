@@ -27,13 +27,18 @@ urlpatterns = [
                   path('v1/orders/', views.orders_create),
                   path('v1/orders/<str:pk>/', views.orders_get),
                   path('v1/orders/', views.orders_list),
+                  path('v1/products/', views.products_list),
 
                   path('v1/store/', views.store_home),
                   path('v1/store/products/', views.store_list_products),
                   path('v1/store/products/new/', views.store_add_product),
                   path('v1/store/products/update/<str:id>/', views.store_update_product),
                   path('v1/store/products/delete/<str:id>/', views.store_delete_product),
+
                   path('v1/store/categories/new/', views.store_add_food_category),
+                  path('v1/store/categories/', views.store_list_categories),
+                  path('v1/store/categories/update/<str:id>/', views.store_update_category),
+                  path('v1/store/categories/delete/<str:id>/', views.store_delete_category),
 
                   path('admin/', admin.site.urls),
               ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT) + static(settings.MEDIA_URL,

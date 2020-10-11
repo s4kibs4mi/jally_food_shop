@@ -5,6 +5,8 @@ from django.shortcuts import redirect
 from rest_api.forms import FoodItemForm
 from rest_api.forms import FoodCategoryForm
 from rest_api.models import FoodItem
+from rest_api.models import FoodCategory
+from rest_api.serializers import FoodItemSerializer
 
 
 # Create your views here.
@@ -51,6 +53,14 @@ def orders_get(request):
 def orders_list(request):
     pass
 
+
+@api_view(['GET'])
+def products_list(request):
+    food_items = FoodItem.objects.all()
+    return Response(FoodItemSerializer(food_items, many=True).data)
+
+
+# Store endpoints start
 
 def store_home(request):
     return redirect("/v1/store/products")
@@ -113,3 +123,33 @@ def store_add_food_category(request):
         'msg': ''
     }
     return render(request, "store/add_category.html", context)
+
+
+def store_list_categories(request):
+    food_categories = FoodCategory.objects.all()
+    ctx = {
+        'food_categories': food_categories
+    }
+    return render(request, "store/list_categories.html", ctx)
+
+
+def store_update_category(request, id):
+    instance = FoodCategory.objects.get(id=id)
+    form = FoodCategoryForm(None, instance=instance)
+
+    if request.method == "POST":
+        form = FoodCategoryForm(request.POST, request.FILES, instance=instance)
+        if form.is_valid():
+            form.save()
+            return redirect("/v1/store/categories")
+
+    ctx = {
+        'form': form
+    }
+    return render(request, 'store/update_category.html', ctx)
+
+
+def store_delete_category(request, id):
+    instance = FoodCategory.objects.get(id=id)
+    instance.delete()
+    return redirect("/v1/store/categories")
